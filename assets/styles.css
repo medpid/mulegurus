@@ -22,7 +22,7 @@
 /* Set black background color, white text and some padding */
 
 footer {
-    background-color: #2d55a8;
+    background-color: #4d4d4d;
     color: white;
     padding: 15px;
 }
@@ -37,4 +37,8 @@ footer {
     .row.content {
         height: auto;
     }
+}
+
+.navbar-brand{
+ padding: 0px !important;
 }
