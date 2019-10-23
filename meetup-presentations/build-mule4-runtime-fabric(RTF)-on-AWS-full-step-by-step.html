@@ -53,10 +53,33 @@
         <div class="col-sm-8 text-left">
           <h1>Mule4 Runtime Fabric (RTF) on AWS</h1>
           <hr />
-<p>Welcome back to MuleGurus.con!</p>
 
-<p>Today we are going to learn about Mule4 runtime fabric setup, the following are the tools and technologies required.</p>
+<p><strong>Anypoint Runtime Fabric Overview?</strong></p>
 
+<p>Anypoint Runtime Fabric is a container service that automates the deployment and
+orchestration of Mule applications and API gateways. Runtime Fabric runs within a
+customer-managed infrastructure on AWS, Azure, virtual machines (VMs), and
+bare-metal servers.</p>
+
+<p>Some of the capabilities of Anypoint Runtime Fabric include:</p>
+
+<ol>
+  <li>Isolation between applications by running a separate Mule runtime per application.</li>
+  <li>Ability to run multiple versions of Mule runtime on the same set of resources.</li>
+  <li>Scaling applications across multiple replicas.</li>
+  <li>Automated application fail-over.</li>
+  <li>Application management with Anypoint Runtime Manager.</li>
+</ol>
+
+<p><strong>Runtime Fabric Architecture</strong></p>
+
+<p>Anypoint Runtime Fabric is composed of a set of VMs that form a cluster. Each VM serves as either a controller node or a worker node.</p>
+
+<p><img src="/mule/architecture-controller-worker.png" alt="Runtime Fabric Architecture" /></p>
+
+<p><strong>Controller:</strong> a VM dedicated for operating Runtime Fabric, including orchestration services, a distributed database, load balancing, and services that enable you to manage the cluster from Anypoint Platform.</p>
+
+<p><strong>Worker:</strong> a VM dedicated for running Mule applications and API gateways. Mule applications and API proxies run on workers.</p>
 
         </div>
         <div class="col-sm-2 sidenav">
