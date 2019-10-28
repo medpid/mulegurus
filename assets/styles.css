@@ -23,16 +23,17 @@
 
 footer {
     background-color: #999999a6;
-    
     padding: 15px;
 }
-.under{
+
+.under {
     /*display: inline-block;*/
     text-decoration: none;
     border-bottom: 2px solid #0f1d99b6;
     margin-bottom: 10px;
 }
-.under-foot{
+
+.under-foot {
     display: inline-block;
     text-decoration: none;
     border-bottom: 2px solid rgb(74, 78, 82);
@@ -51,18 +52,19 @@ footer {
     }
 }
 
-.navbar-brand{
- padding: 0px !important;
+.navbar-brand {
+    padding: 0px !important;
 }
-p, h6, h5, h4, h3, h2, h1, a{
+
+p, h6, h5, h4, h3, h2, h1, a, table, td{
     font-family: 'Roboto', sans-serif;
 }
 
-p img{
+p img {
     padding: 4px;
     line-height: 1.42857143;
     background-color: #fff;
-    border: 1px solid #ddd;
+    border: 1px solid #eaeaea;
     border-radius: 4px;
     -webkit-transition: all .2s ease-in-out;
     -o-transition: all .2s ease-in-out;
@@ -71,10 +73,22 @@ p img{
     max-width: 100%;
     height: auto;
 }
-.col-sm-8.text-left{
-    border-left: 1px solid #f1f1f1;
-    border-right: 1px solid #f1f1f1;
+
+table {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 1rem;
+    background-color: transparent;
+    border-collapse: collapse;
+    border: 1px solid #eaeaea;
 }
-.sidenav{
-    background-color: #fff !important;
+td, th {
+    border: 1px solid #eaeaea;
+    padding: 5px;
+}
+table td:first-child {
+    background-color: rgb(217, 231, 236);
+}
+em {
+    color: #0088fd;
 }
