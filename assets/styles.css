@@ -56,7 +56,7 @@ footer {
     padding: 0px !important;
 }
 
-p, h6, h5, h4, h3, h2, h1, a, table, td{
+p, h6, h5, h4, h3, h2, h1, a, table, td, li ul, div, span{
     font-family: 'Roboto', sans-serif;
 }
 

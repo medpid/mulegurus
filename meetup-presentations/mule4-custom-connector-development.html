@@ -4,7 +4,7 @@
     <title>MuleGurus.com - Mule4 Custom Connector Development</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta keywords="Mule4 connector development step by step" />
+    <meta keywords="Mule4 custom connector development step by step tutorial MuleSoft-Connector" />
     <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/assets/styles.css" />
@@ -53,10 +53,183 @@
         <div class="col-sm-8 text-left">
           <h1>Mule4 Custom Connector Development</h1>
           <hr />
-<p>Welcome back to MuleGurus.con!</p>
 
-<p>Today we are going to learn about mule4 custom connector development, the following are the tools and technologies required.</p>
+<p>This is one of the presentation in mule meetup Charlotte, will try to provide all the necessary steps to build the custom connector in mule4. The below illustrates the process of creatin a new connector for Couch DB (one of the simple and powerful small footprint document DB).</p>
 
+<p><strong>Prerequisites:</strong></p>
+
+<ul>
+  <li>JDK 1.8: Download and install JDK 1.8, make sure java is running.</li>
+  <li>Apache Maven (mvn) 3.3.9: Download a zip file and extract it to your favorite location and add it to the classpath. Try the command mvn -version on a new cmd window to make sure this is working.</li>
+  <li>AnypointStudio: Download 7.3 or latest version, extract it to your favorite location.</li>
+  <li>Eclipse m2e plugin (Update Site: http://download.eclipse.org/technology/m2e/releases) - Optional, command line interface is much better and faster for all sorts of mvn operations.</li>
+  <li>Download and install couch DB for this illustration(Run from an administrator command line Ex: go to C:\CouchDB\bin, the command to run is couchdb from the bin folder.)</li>
+</ul>
+
+<p><strong>Basic Connector Generation</strong></p>
+
+<p>Open command prompt, navigate to your Anypoint Studio workspace. Run the mvn command to make sure your maven is working correctly.</p>
+
+<p>Run the following command to create a Basic Connecto application using maven archetype plugin for mule connector.</p>
+
+<p>Plugin Details: 
+	org.mule.extensions:mule-extensions-archetype-maven-plugin:1.2.0:generate</p>
+
+<p>Commands to Run:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mvn archetype:generate -DarchetypeGroupId=org.mule.extensions -DarchetypeArtifactId=mule-extensions-archetype -DarchetypeVersion=1.2.0-SNAPSHOT -DgroupId=com.mule.demo -DartifactId=couchdb-connector -DextensionName=CouchDB
+</code></pre></div></div>
+
+<p>Once the command completes the project creation then navigate to the application direcotry (couchdb-connector). Here we are trying to make this as an eclipse project (adding eclipse capabilities) to import into the Anypoint Studio.</p>
+
+<p>Command to be executed from the project folder:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mvn clean -&gt; Clean the project folder from maven perspective.
+mvn eclipse:eclipse -&gt; To generate eclipse project files. Many developers would have done this in the past while working with java projects.
+</code></pre></div></div>
+
+<p>Run another two maven command to clean and test your project template generated using the above command.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mvn clean test : mvn clean test would clean and run all the test cases which are part of the auto generated application.
+</code></pre></div></div>
+
+<p>Now it’s time to import the entire project into eclipse or MuleSoft Anypoint Studio even though it looks like a java project. In my case I just imported into Anypoint Studio.</p>
+
+<p><img src="/mule/temp-connector-eclipse.png" alt="Custom Connector Basic Structure" /></p>
+
+<p>If you want to execute some basic steps and small changes to understand what is going on then the first thing you need to do is to add <em>log4j2.xml</em>. Go to src\main\resources and add a <em>log4j2.xml</em>.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;Configuration&gt;
+	&lt;Appenders&gt;
+		&lt;Console name="Console" target="SYSTEM_OUT"&gt;
+			&lt;PatternLayout pattern="%-5p %d [%t] %c: %m%n"/&gt;
+		&lt;/Console&gt;
+	&lt;/Appenders&gt;
+	&lt;Loggers&gt;
+		&lt;AsyncLogger name="org.apache.cxf" level="WARN"/&gt;
+		&lt;AsyncLogger name="org.apache" level="WARN"/&gt;
+		&lt;AsyncLogger name="org.springframework.beans.factory" level="WARN"/&gt;
+		&lt;!-- Mule classes --&gt;
+		&lt;AsyncLogger name="org.mule.extension" level="INFO"/&gt;
+		&lt;AsyncRoot level="INFO"&gt;
+			&lt;AppenderRef ref="Console"/&gt;
+		&lt;/AsyncRoot&gt;
+	&lt;/Loggers&gt;
+&lt;/Configuration&gt;
+</code></pre></div></div>
+
+<p>By default if you create a connector project then you would see the following <em>.java</em> files. Ignore the other files in the above picture for now.</p>
+
+<p><em>TempConfiguration.java</em> :: This is the configuratoin class for the connector any values defined in this class are served as your global configuration. For example by default there would be a configId, which is nothing but your configuration name to uniquly identify the spring bean in the entire project. For a good example irrespective of how many http requests you would use in your project all them would use one httpRequestConfig that means many instances of a single connector would use the same configuration.</p>
+
+<p><em>TempConnection.java</em> :: The Connection is to actually create an instance of your connection, for exmple if you are using http then you would actually create an instance of your httpClient in this class. By default this class comes with a public constructor and an invalidate method. The constructor is responsible for creating an instance of an actual connection and invalidate method is a lifecycle method called by the container which should have logic to gracefully close the connections that are being held by the connector.</p>
+
+<p><em>TempConnectionProvider.java</em> :: Connection provider implements one of the ConnectionProviders with generic argument of Connection. In this case *TempConnectionProvider implements PoolingConnectionProvider<TempConnection>* which means it should only deal with TempConnection. By default the ConnectionProvider will have three lifecycle method connect, disconnect and validate method and you can define the necessary parameters required for your connection. The validae method is to test your connection to make sure everything is correct. This basically in your experience when you test connection it would say Connection Successful in the http request connector. If you see below the connect method is calling the TempConnection with the parameters for connection, disconnect is calling the invalidate method of your connection and validate method returns the default success without doing anything but you can really validate the connection and result success or failure.</TempConnection></p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	@Override
+	public TempConnection connect() throws ConnectionException {
+		return new TempConnection(hostName, port, username, password, dbName);
+	}
+
+	@Override
+	public void disconnect(TempConnection connection) {
+		try {
+			connection.invalidate();
+		} catch (Exception e) {
+			LOGGER.error("Error while disconnecting [" + connection + "]: " + e.getMessage(), e);
+		}
+	}
+
+	@Override
+	public ConnectionValidationResult validate(TempConnection connection) {
+		return ConnectionValidationResult.success();
+	}
+</code></pre></div></div>
+
+<p><em>TempExtension.java</em> ::  Externsion is basically a class which connects different part of the connector and this is the primary class that defines the decorative and licensing information, wihch is used by the Anypoint Studio to display the connector and classify under which license category this connector belongs to. Prefix describes how is the spring XML schema is supposed to be, name is the display name of the connector in the Studio, Vendor is the Vendor name incase if it is not from MuleSoft by itself and license defines what is the type of license required for using this connector, in this case evaluation is allowed but you need license to use it in the production environment.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Xml(prefix = "temp")
+@Extension(name = "Temp", vendor="prov-name")
+@Configurations(TempConfiguration.class)
+@RequiresEnterpriseLicense(allowEvaluationLicense = true)
+public class TempExtension {
+
+}
+</code></pre></div></div>
+
+<p><em>TempOperations.java</em> :: This is the main class where you define you operations for your connector, this is typically all the supported operations by the connector. In case of Core connector SetVariable, SetPayload are typically two operations which is simply resumbles the same. Here are two different operations provided here. You would notice the Summary and DisplayName when you actually used the connectore what they actually refers to. Remaining is simply a java code.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	@MediaType(value = ANY, strict = false)
+	public String retrieveInfo(@Config TempConfiguration configuration, @Connection TempConnection connection) {
+		System.out.println("PERSON DATA :" + person);
+		return "Using Configuration [" + configuration.getConfigId() + "] with Connection id [5984]";
+	}
+
+	/**
+	* Example of a simple operation that receives a string parameter and returns a
+	* new string message that will be set on the payload.
+	*/
+	@MediaType(value = ANY, strict = false)
+	@DisplayName("Save to Couch DB")
+	@Summary("This is summary demo.")
+	public InputStream saveObject(@ParameterGroup(name = "Person Properties") Person person, @Config TempConfiguration configuration, @Connection TempConnection connection) {
+		System.out.println("SAY HI Connection: " + configuration.getChannel());
+		Map&lt;String, Object&gt; map = new HashMap&lt;String, Object&gt;();
+		map.put("firstName", person.getFirstName());
+		map.put("lastName", person.getLastName());
+		map.put("dateOfBirth", person.getDateOfBirth());
+		map.put("address", person.getAddress());
+		Response result = connection.getDbClient().save(map);
+		String id = result.getId();
+		InputStream output = connection.getDbClient().find(id);
+		return output;
+	}
+</code></pre></div></div>
+
+<p><strong>Download the project described above:</strong></p>
+
+<p><a href="/mule/temp-connector.zip">Download TempConnector Code Here</a></p>
+
+<ol>
+  <li>Download the project and extract it to your workspace folder, run mvn clean and mvn eclipse:eclipse command from command line.</li>
+  <li>Import this project into your Anypoint Studio in case if you want to look at the code and make changes.</li>
+  <li>mvn install is the command to build and install this project into your local maven repository.</li>
+  <li>Create a simple mule application and add the following dependency to your pom.xml to see the connector loaded into your Anypoint Studio Palette.</li>
+</ol>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;dependency&gt;
+	&lt;groupId&gt;com.mule.connectors&lt;/groupId&gt;
+	&lt;artifactId&gt;couchdb-con&lt;/artifactId&gt;
+	&lt;version&gt;1.0.0&lt;/version&gt;
+	&lt;classifier&gt;mule-plugin&lt;/classifier&gt;
+&lt;/dependency&gt;
+</code></pre></div></div>
+<p><img src="/mule/temp-connector-integrated.png" alt="Connector Loaded into the Palette" /></p>
+
+<p>Rest of the process is similar to using other connectors.</p>
+
+<p><strong>Notes:</strong></p>
+<ol>
+  <li>Define parameters using @Parameter, would give you more options to define various annotations to make parameters Optional with default values.</li>
+  <li>Set custom display names for parameters using @DisplayName</li>
+  <li>Connection providers supported by MuleSoft are PoolingConnectionProvider(Default), CachedConnectionProvider and ConnectionProvider.</li>
+  <li>Connection Provider standard methods are connect, disconnect and validate.</li>
+  <li>org.mule.extension  is the package you are expecting your logs to work from your application.</li>
+  <li>Download and install the CouchDB, by default runs on port 5984.</li>
+  <li>Dependencies, just incase if you run into errors.</li>
+</ol>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;dependency&gt;
+	&lt;groupId&gt;org.slf4j&lt;/groupId&gt;
+	&lt;artifactId&gt;slf4j-simple&lt;/artifactId&gt;
+	&lt;version&gt;1.7.21&lt;/version&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+	&lt;groupId&gt;org.lightcouch&lt;/groupId&gt;
+	&lt;artifactId&gt;lightcouch&lt;/artifactId&gt;
+	&lt;version&gt;0.2.0&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre></div></div>
 
         </div>
         <div class="col-sm-2 sidenav">
