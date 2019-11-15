@@ -1,4 +1,7 @@
 /* Remove the navbar's default margin-bottom and rounded borders */
+body{
+    background-color: #f1f1f1;
+}
 
 .navbar {
     margin-bottom: 0;
@@ -58,6 +61,13 @@ footer {
 
 p, h6, h5, h4, h3, h2, h1, a, table, td, li ul, div, span{
     font-family: 'Roboto', sans-serif;
+    line-height: 1.2;
+}
+.main-content p,li,div,span{
+    line-height: 1.8;
+}
+.main-content{
+    background-color: #fbfbfb;
 }
 
 p img {
@@ -87,8 +97,15 @@ td, th {
     padding: 5px;
 }
 table td:first-child {
-    background-color: rgb(217, 231, 236);
+    background-color: #d9e7ec;
 }
 em {
     color: #0088fd;
+}
+
+pre{
+    background-color: #f6f8fa;
+    border: 1px dotted #ccc;
+    border-radius: 6px;
+    line-height: 1.75;
 }
