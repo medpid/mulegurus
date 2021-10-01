@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>MuleGurus.com - Mule4 Runtime Fabric (RTF) on AWS</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta keywords="Mule4 runtime fabric setup aws terraform rtf" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/assets/styles.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <script data-ad-client="ca-pub-9154292344924288" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <div id="fb-root"></div>
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v5.0&appId=1548096808665789&autoLogAppEvents=1"></script>
+    <script src="https://platform.linkedin.com/in.js" type="text/javascript">lang: en_US</script>
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="https://mulegurus.com"><img src="/assets/logo.png"/></a>
+        </div>
+        <div class="collapse navbar-collapse" id="myNavbar">
+          <ul class="nav navbar-nav navbar-right">
+            <li><!-- <a href="#"><span class="glyphicon glyphicon-log-in"></span> Login</a> --></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row content">
+        <div class="col-sm-3 sidenav">
+          <h4 class="under">My Presentations</h4>
+            
+            <p><a href="/meetup-presentations/build-mule4-runtime-fabric(RTF)-on-AWS-full-step-by-step">Mule4 Runtime Fabric (RTF) on AWS</a></p>
+            
+            <p><a href="/meetup-presentations/mule4-custom-connector-development">Mule4 Custom Connector Development</a></p>
+                
+            
+          <h4 class="under">My Blogs</h4>
+            
+            <p><a href="/mulesoft/platform/what-mule-is-all-about.html">What Mule is all about?</a></p>
+            
+            <p><a href="/mulesoft/platform/getting-started-with-mule.html">Getting started with Mule!</a></p>
+                         
+
+        </div>
+        <div class="col-sm-7 text-left main-content">
+          <h2>Mule4 Runtime Fabric (RTF) on AWS</h2>
+          <div class="text-right">
+            <script type="IN/Share" data-url="https://mulegurus.com/meetup-presentations/build-mule4-runtime-fabric(RTF)-on-AWS-full-step-by-step"></script>
+            <div class="fb-like" data-href="/meetup-presentations/build-mule4-runtime-fabric(RTF)-on-AWS-full-step-by-step" data-width="" data-layout="button_count" data-action="like" data-size="small" data-show-faces="true" data-share="true"></div>
+          </div>
+          <hr />
+
+<p><strong>Anypoint Runtime Fabric Overview?</strong></p>
+
+<p>Anypoint Runtime Fabric is a container service that automates the deployment and
+orchestration of Mule applications and API gateways. Runtime Fabric runs within a
+customer-managed infrastructure on AWS, Azure, virtual machines (VMs), and
+bare-metal servers.</p>
+
+<p>Some of the capabilities of Anypoint Runtime Fabric include:</p>
+
+<ol>
+  <li>Isolation between applications by running a separate Mule runtime per application.</li>
+  <li>Ability to run multiple versions of Mule runtime on the same set of resources.</li>
+  <li>Scaling applications across multiple replicas.</li>
+  <li>Automated application fail-over.</li>
+  <li>Application management with Anypoint Runtime Manager.</li>
+</ol>
+
+<p><strong>Runtime Fabric Architecture</strong></p>
+
+<p>Anypoint Runtime Fabric is composed of a set of VMs that form a cluster. Each VM serves as either a controller node or a worker node.</p>
+
+<p><img src="/mule/architecture-controller-worker.png" alt="Runtime Fabric Architecture" /></p>
+
+<p><strong>Controller:</strong> a VM dedicated for operating Runtime Fabric, including orchestration services, a distributed database, load balancing, and services that enable you to manage the cluster from Anypoint Platform.</p>
+
+<p><strong>Worker:</strong> a VM dedicated for running Mule applications and API gateways. Mule applications and API proxies run on workers.
+This separation of responsibilities enables scaling of the worker nodes based on the number of Mule applications. It also enables scaling the controller nodes based on the frequency of deployments, changes in application state, and amount of inbound traffic. To ensure resources are available to re-schedule and re-deploy applications in the event of a hardware failure, MuleSoft recommends over-provisioning the number of worker nodes.
+By default, the services operating Runtime Fabric are deployed across the controller nodes to avoid a single point of failure in the system.</p>
+
+<p><strong>The development configuration is intended for testing only.</strong></p>
+
+<p>It requires at least one controller and two worker nodes. The controller node runs the internal load balancer and agents used to connect to Anypoint Platform</p>
+
+<p>Communication between the agent and Anypoint Platform is always outbound. Multiple replicas of application can run across workers.</p>
+
+<p><img src="/mule/mule-rtf-dev-configuration.png" alt="Runtime Fabric Architecture" /></p>
+
+<hr />
+
+<p><strong>New Terms used in this post are:</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Term Used</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>VPC</td>
+      <td>Virtual Private Cloud</td>
+    </tr>
+    <tr>
+      <td>SUBNET</td>
+      <td>Network within VPC</td>
+    </tr>
+    <tr>
+      <td>EC2</td>
+      <td>A Virtual Machine</td>
+    </tr>
+    <tr>
+      <td>IAM</td>
+      <td>User Creation/Roles</td>
+    </tr>
+    <tr>
+      <td>Security Groups</td>
+      <td>Traffic Control</td>
+    </tr>
+    <tr>
+      <td>Volumes</td>
+      <td>Disk/SSD based on Requirement</td>
+    </tr>
+    <tr>
+      <td>KeyPair</td>
+      <td>A key used to ssh into EC2</td>
+    </tr>
+    <tr>
+      <td>Kubernetes</td>
+      <td>Container Orchestrator</td>
+    </tr>
+    <tr>
+      <td>Docker</td>
+      <td>Container</td>
+    </tr>
+    <tr>
+      <td>Openssl</td>
+      <td>Tool to create certs</td>
+    </tr>
+    <tr>
+      <td>Cygwin</td>
+      <td>Tool to SSH into Linux Machines</td>
+    </tr>
+    <tr>
+      <td>Terraform</td>
+      <td>Tool used in cloud platform automation.</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<p><strong>Runtime Fabric Setup on AWS</strong></p>
+
+<p>A valid mulesoft license is required to setup runtime fabric on AWS, I have used a valid license to while writing this blog. Also we need many softwares to be setup in the machine from where we are tyring to setup. A detail descriptions for each one of those steps are listed below, the screenshots for other than MuleSoft are not captured as they are not relevent to this context. Please refer to the the relevent documentation or request at the end of the post.</p>
+
+<p><strong>Download the below software, see if you can use the latest version of each when you are trying it out!</strong></p>
+
+<p><a href="https://cygwin.com/install.html">Cygwin</a></p>
+
+<p><a href="https://docs.aws.amazon.com/cli/latest/userguide/install-windows.html#install-msi-on-windows">AWS CLI</a></p>
+
+<p><a href="https://www.terraform.io/downloads.html">Terraform</a></p>
+
+<p><a href="https://slproweb.com/products/Win32OpenSSL.html">Open SSL</a></p>
+
+<p><strong>Step #1: AWS Setup</strong></p>
+
+<p>Login to your AWS account console <a href="https://aws.amazon.com/console/">AWS Console</a>, look for IAM service. You will have to create a new user with Administrator Role, at the end of the process you will also download a credenials file which will have two important values called KEY ID and ACCESS KEY.</p>
+
+<p><a href="https://docs.aws.amazon.com/cli/latest/userguide/install-windows.html#install-msi-on-windows">Download AWS CLI for winddows</a> and install once you install make sure the AWS CLI is configured to talk to your account. Use the command <em>aws –version</em> to verify the aws cli version. Use the command <em>aws configure</em> to configure your aws KEY ID and ACCESS KEY to connect your local AWS CLI to talk to your account on AWS programmatically.</p>
+
+<p>Once you are done with these steps, try the command to list down any S3 buckets you have in your account <em>aws s3 ls</em>. It should display the S3 buckets that you have in your account if your AWS CLI is configured correctly.</p>
+
+<p>From AWS console look for EC2 and navigate to EC2 dashboard to create a key pair and download the keypair. The keypair will allow you to connect to EC2 instances from any ssh console like cygwin or direct ssh from any linux or mac console.</p>
+
+<p><img src="/mule/aws-keypair.png" alt="Create and Download AWS Key Pair" /></p>
+
+<p><strong>Step #2: Cygwin</strong></p>
+
+<p>This is a tool for SSH on windows, download and install. Make sure you are able to open and runn few linux command like <em>ls</em> or <em>pwd</em> to make sure it is working. While installing cygwin you will have an option to choose packages, where you will have to select ssh and open ssh packages that adds ssh capabilities to the cygwin installation.</p>
+
+<p>If you have the license.lic file with you ready then go ahead and conver the file to <em>base64</em> format. The command to get base64 version of the <em>base64 -w0 license.lic</em> make sure you provide the complete path for the license.lic file if it is not in the currect working directory of ssh terminal.</p>
+
+<p><strong>Step #3: Terraform</strong></p>
+
+<p>Terraform is a tool that converts terraform scripts into aws cloud formation script and executes on aws platoform. Download and install terraform for now, we will use terraform in the next steps.</p>
+
+<p><strong>Step #4: Anypoint Platoform Setup</strong></p>
+
+<p>Log into <a href="https://anypoint.mulesoft.com/login">Anypoint Platform</a>, navigate to runtime fabrics from left navigation.</p>
+
+<p>Click Create Runtime Manager, Give it a name, once the runtime manager entry is created you will see a small video, activation key and download files for setup. Watch the video and download the action key and setup files.</p>
+
+<p>Extract the setup files into a desired folder, look for aws folder with in the extracted files. Point your cmd to the aws folder and run the following command.</p>
+
+<p>First initialize the terraform, this command will initalize terraform form this folder and you might some new files added by terraform. You need to run this command only one time, doesn’t harm but not required.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>terraform init
+</code></pre></div></div>
+<p><strong>Successful Initialization looks as shown below</strong></p>
+
+<p><img src="/mule/terraform-successful.png" alt="Successful terraform initialization" /></p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>terraform apply -var activation_data=YW55cG9pbnQubXVsZXNvZnQuY29tOjVkMzcyZWFlLWJmZjgtNDEwYy05ZTI1LTA4Y2I0ZDkxOWE1MA== -var key_pair=localdemo -var enable_public_ips=true -var controllers=1 -var workers=2 -var mule_license=2+W35iUhD9k/xQwejPmwzuh2xFFjlbHT6nB+aVPWREZeIZj1ePbUPMKGmXcR52SuN1oiVRquvg/OogGQNpKBOVy9id9FwnTZA/9v/ReXwn1R3z3tTLgzaCk+7mbih1rfXXNYpC/ewsZobX/FDs7TfAJHXy2NxRay6D+UrEXReIxiO0MRqyob+Klqj8Db8Oos5h4wPVbhXOlwmmLZpyAEfd8YkLAmROkFlvyLxoQutcN5U6ZM5GmhEeGamRHR9Nse/IkMSUOwj3Fur0SzEAuJbuAhW9oH0NhkgBQHKMueHiUbcS/NVe1qw/gRXYS6l2hY9wb5RunxdoMRjawkchTNaLDyjyHMMslK2oe57rcnkU1U9lzKVqkxW4WK12zONOtJ+bNG2wWCSBTWvl9fMNMKdQ+UkUzmJkMULtlQBlnCUBFdWpQFSg+9/VP95lesbRZR01EcKd7Nd0cXMbXx//x0JZgB9QKGp6Iid5y2tJ/TY2eBSwEH5ssnhIUfRfS1aB8fqCWasOkEfSlvTmRkusjonKgVsePM5GIdwRuJb72udUw0B8vn0+/MlUvFqaaKts9HfUs8TzsuUOScjkAaxkFogeOvhtVCPjXvL0tQkF/X996jVBykGNkcnQHUXOzYTgk0J0a3M3Z17H2gXbeZ+iMJo7bTp9RPcKjigN1bkqKA2H5xmfr4cpoxb84NLe9B+JSpS1B+nWAbjaUSLjHkiAWZqCuTJg6XCANCagmGOJ0mOAMlR7MpampN9uhcw/7tPscdRFJuRbg8Bzq8AUjm/2A79T7dJW8XvXI6GFGzXsMStF/cXy7nNGGOb+nFh7yzEb5UYN9NYy/YylIFWZ+buFFcIXm+QuX6Rw+1SlhzqTybWxAAk3CW3f7CXXZpbxC7G0Z3 -state=tf-data/rtf.tfstate
+</code></pre></div></div>
+
+<p><em>activation_data:</em> We have copied from Anypoint platform runtime fabbric creation step.</p>
+
+<p><em>key_pair:</em> Name ofthe keypair that we have created while setting up AWS in step #1.</p>
+
+<p><em>enable_public_ips:</em> By default this is set to false, set this to try to have public ips created for each ec2 instance so that we can login to each ec2 instance to check in case of any problems.</p>
+
+<p><em>controllers:</em> Indicates how many controllers are required.</p>
+
+<p><em>workers:</em> Indicates how many workers are required for this setup.</p>
+
+<p><em>mule_license:</em> We have to provide the base64 version of the license file.</p>
+
+<p><em>state:</em> This is for terraform what is the file where terraform can write a very detailed plan and results. Terraform internally maintains a state from this file.</p>
+
+<p>This will take a while based on the numner of controllers and workers, you would see the below screen if everytihg goes as expected.</p>
+
+<p><img src="/mule/terraform-apply-successful.png" alt="Successful Terraform Successful" /></p>
+
+<p>Copy the last few lines from the above results, where you have the IP addresses of all the controller and worker nodes also you will receive the ops center url, username and password.</p>
+
+<p>Example</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>controller_elastic_ips =
+controller_private_ips = 172.31.0.11
+controller_public_ips = 18.232.58.16
+inbound_traffic_controller_private_ips =
+inbound_traffic_controller_public_ips =
+loadbalancer_ip =
+worker_private_ips = 172.31.0.7 172.31.0.27
+worker_public_ips = 3.89.25.21 34.237.140.65
+
+
+Note: Use the worker node IPs to access the Ops Center.
+
+12 / 12: Generate Ops Center credentials
+================================================
+tr: write error: Broken pipe
+tr: write error
+user admin@runtime-fabric created
+Ops Center access:
+URL:      https://3.94.133.115:32009/web
+User:     admin@runtime-fabric
+Password: tvhp1EsiL9cOkLbsMFKZHwkjxVtl8CVp9wDXYa22LkhPlQSLtn
+Done.
+</code></pre></div></div>
+
+<p><strong>Connecting to SSH:</strong> Remember you have downloaded the keypair that you have created in AWS step, copy that into your home folder of any shell that you are using. Run the following command to have right access to the key file.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>chmod 400 keypair-name.pem
+</code></pre></div></div>
+
+<p>Use the below command to ssh into any server using the public address, if you are setting up with in the office network then you should be able to use the private address as well as you are also in the same network.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ssh -i keypair_name_here.pem ec2-user@54.165.61.229
+</code></pre></div></div>
+
+<p><strong>Trouble shooting:</strong></p>
+
+<p>Login to any ec2 instance to look at the configuration in the controller nodes.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>more /opt/anypoint/runtimefabric/env
+</code></pre></div></div>
+<p>Check the log files.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tail -1000f /var/log/rtf-init.log
+</code></pre></div></div>
+
+<p><strong>Openssl:</strong> Use the command below (Assuming that you have already downloaded and setup openssl) to createa self signed certificate to upload into your anypoint platform to access apis using https.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365
+</code></pre></div></div>
+
+<p>Now goto Secretes Manager in the Anypoint platform, create a security Group and give it a name.</p>
+
+<p>While you are in the edit mode itself, You will have to add key store and key.</p>
+
+<p>Similarly create a TLS Context as well.</p>
+
+<p>Come back your RTF that you have created, now you would see it is active and you are required to enable inbound traffic inorder your rtf respond to your incoming requests. Here you would require a environment, Security Group and TLS context. Once this is successful then you use your controller pulic ip to access your APIs.</p>
+
+<p><img src="/mule/enable-inbound-traffice.png" alt="enable-inbound-traffice.png" /></p>
+
+<p>Deploy Application</p>
+
+<p><img src="/mule/deploy-application.png" alt="deploy-application" /></p>
+
+<p>Ops Center using once of the controller public IPs.</p>
+
+<p><img src="/mule/ops-center.png" alt="ops-center.png" /></p>
+
+<p>Sample Application</p>
+
+<p><img src="/mule/sample-app.png" alt="Sample Application" /></p>
+
+
+          <hr>
+          <div class="fb-comments" data-href="/meetup-presentations/build-mule4-runtime-fabric(RTF)-on-AWS-full-step-by-step" data-width="" data-numposts="10"></div>
+        </div>
+        <div class="col-sm-2 sidenav">
+          <div class="well">
+            <p>ADS</p>
+          </div>
+          <div class="well">
+            <p>ADS</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+   <!-- Footer -->
+   <footer class="page-footer font-small">
+      <div class="container text-md-left">
+        <div class="row">
+          <div class="col-md-3 mx-auto">&nbsp;</div>
+          <div class="col-md-3 mx-auto">
+            <h5 class="font-weight-bold under-foot">My Applications</h5>
+            <ul class="list-unstyled">
+              <li>
+                <a href="https://mulegurus.com">MuleGurus.com</a>
+              </li>
+            </ul>
+          </div>
+          <div class="col-md-6 mx-auto">
+            <h5 class="font-weight-bold under-foot">Social Media</h5>
+            <ul class="list-unstyled">
+              <li><a href="#"><i class="fa fa-lg fa-linkedin"></i> LinkedIn</a></li>
+              <li><a href="#"><i class="fa fa-lg fa-twitter"></i></a> Twitter</li>
+              <li><a href="#"><i class="fa fa-lg fa-facebook"></i></a> Facebook</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-copyright text-center py-3">
+        © 2018 Copyright:
+        <a href="https://mulegurus.com"> MuleGurus.com</a>
+      </div>
+    </footer>
+  </body>
+</html>
